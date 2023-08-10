@@ -24,7 +24,7 @@ class MonthView<T extends Object?> extends StatefulWidget {
   /// Builds month page title.
   ///
   /// Used default title builder if null.
-  final DateWidgetBuilder? headerBuilder;
+  final HeaderBuilder? headerBuilder;
 
   /// This function will generate DateString in the calendar header.
   /// Useful for I18n
@@ -138,6 +138,12 @@ class MonthView<T extends Object?> extends StatefulWidget {
   /// Option for SafeArea.
   final SafeAreaOption safeAreaOption;
 
+  /// Callback for the Header title
+  final HeaderTitleCallback? onHeaderTitleTap;
+
+  /// Page controller to control page actions.
+  final PageController? pageController;
+
   /// Main [Widget] to display month view.
   const MonthView({
     Key? key,
@@ -166,6 +172,8 @@ class MonthView<T extends Object?> extends StatefulWidget {
     this.weekDayStringBuilder,
     this.headerStyle = const HeaderStyle(),
     this.safeAreaOption = const SafeAreaOption(),
+    this.onHeaderTitleTap,
+    this.pageController,
   }) : super(key: key);
 
   @override
@@ -195,7 +203,7 @@ class MonthViewState<T extends Object?> extends State<MonthView<T>> {
 
   late WeekDayBuilder _weekBuilder;
 
-  late DateWidgetBuilder _headerBuilder;
+  late HeaderBuilder _headerBuilder;
 
   EventController<T>? _controller;
 
@@ -215,7 +223,8 @@ class MonthViewState<T extends Object?> extends State<MonthView<T>> {
     _regulateCurrentDate();
 
     // Initialize page controller to control page actions.
-    _pageController = PageController(initialPage: _currentIndex);
+    _pageController =
+        widget.pageController ?? PageController(initialPage: _currentIndex);
 
     _assignBuilders();
   }
@@ -288,7 +297,10 @@ class MonthViewState<T extends Object?> extends State<MonthView<T>> {
           children: [
             Container(
               width: _width,
-              child: _headerBuilder(_currentDate),
+              child: _headerBuilder(
+                _currentDate,
+                onHeaderTitleTap: widget.onHeaderTitleTap,
+              ),
             ),
             Expanded(
               child: PageView.builder(
@@ -459,19 +471,21 @@ class MonthViewState<T extends Object?> extends State<MonthView<T>> {
   }
 
   /// Default month view header builder
-  Widget _defaultHeaderBuilder(DateTime date) {
+  Widget _defaultHeaderBuilder(DateTime date,
+      {HeaderTitleCallback? onHeaderTitleTap}) {
     return MonthPageHeader(
-      onTitleTapped: () async {
-        final selectedDate = await showDatePicker(
-          context: context,
-          initialDate: date,
-          firstDate: _minDate,
-          lastDate: _maxDate,
-        );
+      onTitleTapped: onHeaderTitleTap ??
+          () async {
+            final selectedDate = await showDatePicker(
+              context: context,
+              initialDate: date,
+              firstDate: _minDate,
+              lastDate: _maxDate,
+            );
 
-        if (selectedDate == null) return;
-        jumpToMonth(selectedDate);
-      },
+            if (selectedDate == null) return;
+            jumpToMonth(selectedDate);
+          },
       onPreviousMonth: previousPage,
       date: date,
       dateStringBuilder: widget.headerStringBuilder,

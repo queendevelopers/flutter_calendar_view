@@ -43,7 +43,7 @@ class DayView<T extends Object?> extends StatefulWidget {
   final DateWidgetBuilder? timeLineBuilder;
 
   /// Builds day title bar.
-  final DateWidgetBuilder? dayTitleBuilder;
+  final HeaderBuilder? dayTitleBuilder;
 
   /// Builds custom PressDetector widget
   ///
@@ -188,6 +188,12 @@ class DayView<T extends Object?> extends StatefulWidget {
   /// By default it will be Duration(hours:0)
   final Duration startDuration;
 
+  /// Callback for the Header title
+  final HeaderTitleCallback? onHeaderTitleTap;
+
+  /// Page controller to control page actions.
+  final PageController? pageController;
+
   /// Main widget for day view.
   const DayView({
     Key? key,
@@ -228,6 +234,8 @@ class DayView<T extends Object?> extends StatefulWidget {
     this.showHalfHours = false,
     this.halfHourIndicatorSettings,
     this.startDuration = const Duration(hours: 0),
+    this.onHeaderTitleTap,
+    this.pageController,
   })  : assert(timeLineOffset >= 0,
             "timeLineOffset must be greater than or equal to 0"),
         assert(width == null || width > 0,
@@ -270,7 +278,7 @@ class DayViewState<T extends Object?> extends State<DayView<T>> {
 
   late EventTileBuilder<T> _eventTileBuilder;
 
-  late DateWidgetBuilder _dayTitleBuilder;
+  late HeaderBuilder _dayTitleBuilder;
 
   late FullDayEventBuilder<T> _fullDayEventBuilder;
 
@@ -300,7 +308,8 @@ class DayViewState<T extends Object?> extends State<DayView<T>> {
     _calculateHeights();
     _scrollController =
         ScrollController(initialScrollOffset: widget.scrollOffset);
-    _pageController = PageController(initialPage: _currentIndex);
+    _pageController =
+        widget.pageController ?? PageController(initialPage: _currentIndex);
     _eventArranger = widget.eventArranger ?? SideEventArranger<T>();
     _assignBuilders();
   }
@@ -380,7 +389,10 @@ class DayViewState<T extends Object?> extends State<DayView<T>> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _dayTitleBuilder(_currentDate),
+              _dayTitleBuilder(
+                _currentDate,
+                onHeaderTitleTap: widget.onHeaderTitleTap,
+              ),
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(color: widget.backgroundColor),
@@ -631,23 +643,25 @@ class DayViewState<T extends Object?> extends State<DayView<T>> {
   /// Default view header builder. This builder will be used if
   /// [widget.dayTitleBuilder] is null.
   ///
-  Widget _defaultDayBuilder(DateTime date) {
+  Widget _defaultDayBuilder(DateTime date,
+      {HeaderTitleCallback? onHeaderTitleTap}) {
     return DayPageHeader(
       date: _currentDate,
       dateStringBuilder: widget.dateStringBuilder,
       onNextDay: nextPage,
       onPreviousDay: previousPage,
-      onTitleTapped: () async {
-        final selectedDate = await showDatePicker(
-          context: context,
-          initialDate: date,
-          firstDate: _minDate,
-          lastDate: _maxDate,
-        );
+      onTitleTapped: onHeaderTitleTap ??
+          () async {
+            final selectedDate = await showDatePicker(
+              context: context,
+              initialDate: date,
+              firstDate: _minDate,
+              lastDate: _maxDate,
+            );
 
-        if (selectedDate == null) return;
-        jumpToDate(selectedDate);
-      },
+            if (selectedDate == null) return;
+            jumpToDate(selectedDate);
+          },
       headerStyle: widget.headerStyle,
     );
   }

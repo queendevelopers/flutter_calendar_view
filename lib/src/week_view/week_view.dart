@@ -183,6 +183,12 @@ class WeekView<T extends Object?> extends StatefulWidget {
   /// Display full day event builder.
   final FullDayEventBuilder<T>? fullDayEventBuilder;
 
+  /// Callback for the Header title
+  final HeaderTitleCallback? onHeaderTitleTap;
+
+  /// Page controller to control page actions.
+  final PageController? pageController;
+
   /// Main widget for week view.
   const WeekView({
     Key? key,
@@ -224,6 +230,8 @@ class WeekView<T extends Object?> extends StatefulWidget {
     this.headerStyle = const HeaderStyle(),
     this.safeAreaOption = const SafeAreaOption(),
     this.fullDayEventBuilder,
+    this.onHeaderTitleTap,
+    this.pageController,
   })  : assert((timeLineOffset) >= 0,
             "timeLineOffset must be greater than or equal to 0"),
         assert(width == null || width > 0,
@@ -302,7 +310,8 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
     _calculateHeights();
     _scrollController =
         ScrollController(initialScrollOffset: widget.scrollOffset);
-    _pageController = PageController(initialPage: _currentIndex);
+    _pageController =
+        widget.pageController ?? PageController(initialPage: _currentIndex);
     _eventArranger = widget.eventArranger ?? SideEventArranger<T>();
 
     _assignBuilders();
@@ -381,7 +390,11 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _weekHeaderBuilder(_currentStartDate, _currentEndDate),
+              _weekHeaderBuilder(
+                _currentStartDate,
+                _currentEndDate,
+                onHeaderTitleTap: widget.onHeaderTitleTap,
+              ),
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(color: widget.backgroundColor),
@@ -710,23 +723,25 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
 
   /// Default view header builder. This builder will be used if
   /// [widget.dayTitleBuilder] is null.
-  Widget _defaultWeekPageHeaderBuilder(DateTime startDate, DateTime endDate) {
+  Widget _defaultWeekPageHeaderBuilder(DateTime startDate, DateTime endDate,
+      {HeaderTitleCallback? onHeaderTitleTap}) {
     return WeekPageHeader(
       startDate: _currentStartDate,
       endDate: _currentEndDate,
       onNextDay: nextPage,
       onPreviousDay: previousPage,
-      onTitleTapped: () async {
-        final selectedDate = await showDatePicker(
-          context: context,
-          initialDate: startDate,
-          firstDate: _minDate,
-          lastDate: _maxDate,
-        );
+      onTitleTapped: onHeaderTitleTap ??
+          () async {
+            final selectedDate = await showDatePicker(
+              context: context,
+              initialDate: startDate,
+              firstDate: _minDate,
+              lastDate: _maxDate,
+            );
 
-        if (selectedDate == null) return;
-        jumpToWeek(selectedDate);
-      },
+            if (selectedDate == null) return;
+            jumpToWeek(selectedDate);
+          },
       headerStringBuilder: widget.headerStringBuilder,
       headerStyle: widget.headerStyle,
     );
