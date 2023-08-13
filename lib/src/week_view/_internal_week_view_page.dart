@@ -1,17 +1,17 @@
+import '../modals.dart';
+import '../painters.dart';
+import '../typedefs.dart';
+import '../enumerations.dart';
+import '../event_controller.dart';
+import 'package:flutter/material.dart';
+import '../components/_internal_components.dart';
+import '../event_arrangers/event_arrangers.dart';
+import '../components/event_scroll_notifier.dart';
 // Copyright (c) 2021 Simform Solutions. All rights reserved.
 // Use of this source code is governed by a MIT-style license
 // that can be found in the LICENSE file.
 
-import 'package:flutter/material.dart';
 
-import '../components/_internal_components.dart';
-import '../components/event_scroll_notifier.dart';
-import '../enumerations.dart';
-import '../event_arrangers/event_arrangers.dart';
-import '../event_controller.dart';
-import '../modals.dart';
-import '../painters.dart';
-import '../typedefs.dart';
 
 /// A single page for week view.
 class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
@@ -111,6 +111,9 @@ class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
   /// Display full day events.
   final FullDayEventBuilder<T> fullDayEventBuilder;
 
+  /// First hour displayed in the layout
+  final int startHour;
+
   /// A single page for week view.
   const InternalWeekViewPage({
     Key? key,
@@ -142,6 +145,7 @@ class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
     required this.minuteSlotSize,
     required this.scrollConfiguration,
     required this.fullDayEventBuilder,
+    required this.startHour,
     required this.weekDetectorBuilder,
   }) : super(key: key);
 
@@ -217,13 +221,13 @@ class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
                     CustomPaint(
                       size: Size(width, height),
                       painter: HourLinePainter(
-                        lineColor: hourIndicatorSettings.color,
-                        lineHeight: hourIndicatorSettings.height,
-                        offset: timeLineWidth + hourIndicatorSettings.offset,
-                        minuteHeight: heightPerMinute,
-                        verticalLineOffset: verticalLineOffset,
-                        showVerticalLine: showVerticalLine,
-                      ),
+                          lineColor: hourIndicatorSettings.color,
+                          lineHeight: hourIndicatorSettings.height,
+                          offset: timeLineWidth + hourIndicatorSettings.offset,
+                          minuteHeight: heightPerMinute,
+                          verticalLineOffset: verticalLineOffset,
+                          showVerticalLine: showVerticalLine,
+                          startHour: startHour),
                     ),
                     if (showLiveLine && liveTimeIndicatorSettings.height > 0)
                       LiveTimeIndicator(
@@ -270,6 +274,7 @@ class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
                                       eventArranger: eventArranger,
                                       eventTileBuilder: eventTileBuilder,
                                       scrollNotifier: scrollConfiguration,
+                                      startHour: startHour,
                                       events: controller
                                           .getEventsOnDay(filteredDates[index]),
                                       heightPerMinute: heightPerMinute,
@@ -288,6 +293,7 @@ class InternalWeekViewPage<T extends Object?> extends StatelessWidget {
                       height: height,
                       timeLineOffset: timeLineOffset,
                       timeLineBuilder: timeLineBuilder,
+                      startHour: startHour,
                     ),
                   ],
                 ),

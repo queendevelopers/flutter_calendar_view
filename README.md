@@ -174,6 +174,7 @@ DayView(
     eventArranger: SideEventArranger(), // To define how simultaneous events will be arranged.
     onEventTap: (events, date) => print(events),
     onDateLongPress: (date) => print(date),
+    startHour: 5 // To set the first hour displayed (ex: 05:00)
 );
 ```
 
@@ -200,6 +201,7 @@ WeekView(
     onEventTap: (events, date) => print(events),
     onDateLongPress: (date) => print(date),
     startDay: WeekDays.sunday, // To change the first day of the week.
+    startHour: 5 // To set the first hour displayed (ex: 05:00)
 );
 ```
 

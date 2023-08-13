@@ -1,24 +1,24 @@
+import '../modals.dart';
+import '../typedefs.dart';
+import '../constants.dart';
+import '../extensions.dart';
+import '../enumerations.dart';
+import '../event_controller.dart';
+import '../calendar_constants.dart';
+import '../style/header_style.dart';
+import '../calendar_event_data.dart';
+import 'package:flutter/material.dart';
+import '../components/components.dart';
+import '_internal_week_view_page.dart';
+import '../calendar_controller_provider.dart';
+import '../components/safe_area_wrapper.dart';
+import '../event_arrangers/event_arrangers.dart';
+import '../components/event_scroll_notifier.dart';
 // Copyright (c) 2021 Simform Solutions. All rights reserved.
 // Use of this source code is governed by a MIT-style license
 // that can be found in the LICENSE file.
 
-import 'package:flutter/material.dart';
 
-import '../calendar_constants.dart';
-import '../calendar_controller_provider.dart';
-import '../calendar_event_data.dart';
-import '../components/components.dart';
-import '../components/event_scroll_notifier.dart';
-import '../components/safe_area_wrapper.dart';
-import '../constants.dart';
-import '../enumerations.dart';
-import '../event_arrangers/event_arrangers.dart';
-import '../event_controller.dart';
-import '../extensions.dart';
-import '../modals.dart';
-import '../style/header_style.dart';
-import '../typedefs.dart';
-import '_internal_week_view_page.dart';
 
 /// [Widget] to display week view.
 class WeekView<T extends Object?> extends StatefulWidget {
@@ -183,6 +183,9 @@ class WeekView<T extends Object?> extends StatefulWidget {
   /// Display full day event builder.
   final FullDayEventBuilder<T>? fullDayEventBuilder;
 
+  /// First hour displayed in the layout, goes from 0 to 24
+  final int? startHour;
+
   /// Main widget for week view.
   const WeekView({
     Key? key,
@@ -224,6 +227,7 @@ class WeekView<T extends Object?> extends StatefulWidget {
     this.headerStyle = const HeaderStyle(),
     this.safeAreaOption = const SafeAreaOption(),
     this.fullDayEventBuilder,
+    this.startHour,
   })  : assert((timeLineOffset) >= 0,
             "timeLineOffset must be greater than or equal to 0"),
         assert(width == null || width > 0,
@@ -284,11 +288,17 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
 
   late List<WeekDays> _weekDays;
 
+  late int _startHour;
+
   final _scrollConfiguration = EventScrollConfiguration();
 
   @override
   void initState() {
     super.initState();
+
+    _startHour = widget.startHour ?? 0;
+    //Security to avoid any height bug
+    if (_startHour > 24) _startHour = 0;
 
     _reloadCallback = _reload;
 
@@ -397,49 +407,48 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
                                 _minDate.day + (index * DateTime.daysPerWeek))
                             .datesOfWeek(start: widget.startDay);
 
-                        return ValueListenableBuilder(
-                          valueListenable: _scrollConfiguration,
-                          builder: (_, __, ___) => InternalWeekViewPage<T>(
-                            key: ValueKey(
-                                _hourHeight.toString() + dates[0].toString()),
-                            height: _height,
-                            width: _width,
-                            weekTitleWidth: _weekTitleWidth,
-                            weekTitleHeight: widget.weekTitleHeight,
-                            weekDayBuilder: _weekDayBuilder,
-                            weekNumberBuilder: _weekNumberBuilder,
-                            weekDetectorBuilder: _weekDetectorBuilder,
-                            liveTimeIndicatorSettings:
-                                _liveTimeIndicatorSettings,
-                            timeLineBuilder: _timeLineBuilder,
-                            onTileTap: widget.onEventTap,
-                            onDateLongPress: widget.onDateLongPress,
-                            onDateTap: widget.onDateTap,
-                            eventTileBuilder: _eventTileBuilder,
-                            heightPerMinute: widget.heightPerMinute,
-                            hourIndicatorSettings: _hourIndicatorSettings,
-                            dates: dates,
-                            showLiveLine: widget.showLiveTimeLineInAllDays ||
-                                _showLiveTimeIndicator(dates),
-                            timeLineOffset: widget.timeLineOffset,
-                            timeLineWidth: _timeLineWidth,
-                            verticalLineOffset: 0,
-                            showVerticalLine: true,
-                            controller: controller,
-                            hourHeight: _hourHeight,
-                            scrollController: _scrollController,
-                            eventArranger: _eventArranger,
-                            weekDays: _weekDays,
-                            minuteSlotSize: widget.minuteSlotSize,
-                            scrollConfiguration: _scrollConfiguration,
-                            fullDayEventBuilder: _fullDayEventBuilder,
-                          ),
-                        );
-                      },
-                    ),
+                      return ValueListenableBuilder(
+                        valueListenable: _scrollConfiguration,
+                        builder: (_, __, ___) => InternalWeekViewPage<T>(
+                          key: ValueKey(
+                              _hourHeight.toString() + dates[0].toString()),
+                          height: _height,
+                          width: _width,
+                          weekTitleWidth: _weekTitleWidth,
+                          weekTitleHeight: widget.weekTitleHeight,
+                          weekDayBuilder: _weekDayBuilder,
+                          weekNumberBuilder: _weekNumberBuilder,
+                          weekDetectorBuilder: _weekDetectorBuilder,
+                          liveTimeIndicatorSettings: _liveTimeIndicatorSettings,
+                          timeLineBuilder: _timeLineBuilder,
+                          onTileTap: widget.onEventTap,
+                          onDateLongPress: widget.onDateLongPress,
+                          onDateTap: widget.onDateTap,
+                          eventTileBuilder: _eventTileBuilder,
+                          heightPerMinute: widget.heightPerMinute,
+                          hourIndicatorSettings: _hourIndicatorSettings,
+                          dates: dates,
+                          showLiveLine: widget.showLiveTimeLineInAllDays ||
+                              _showLiveTimeIndicator(dates),
+                          timeLineOffset: widget.timeLineOffset,
+                          timeLineWidth: _timeLineWidth,
+                          verticalLineOffset: 0,
+                          showVerticalLine: true,
+                          controller: controller,
+                          hourHeight: _hourHeight,
+                          scrollController: _scrollController,
+                          eventArranger: _eventArranger,
+                          weekDays: _weekDays,
+                          minuteSlotSize: widget.minuteSlotSize,
+                          scrollConfiguration: _scrollConfiguration,
+                          fullDayEventBuilder: _fullDayEventBuilder,
+                          startHour: _startHour,
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
+              )),
             ],
           ),
         );
@@ -514,7 +523,7 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
 
   void _calculateHeights() {
     _hourHeight = widget.heightPerMinute * 60;
-    _height = _hourHeight * Constants.hoursADay;
+    _height = _hourHeight * (Constants.hoursADay - _startHour);
   }
 
   void _assignBuilders() {
@@ -591,7 +600,8 @@ class WeekViewState<T extends Object?> extends State<WeekView<T>> {
     required MinuteSlotSize minuteSlotSize,
   }) {
     final heightPerSlot = minuteSlotSize.minutes * heightPerMinute;
-    final slots = (Constants.hoursADay * 60) ~/ minuteSlotSize.minutes;
+    final slots =
+        ((Constants.hoursADay - _startHour) * 60) ~/ minuteSlotSize.minutes;
 
     return Container(
       height: height,
